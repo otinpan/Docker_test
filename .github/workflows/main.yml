@@ -1,0 +1,35 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  #Triggers
+  push:
+    branches:["main"]  # When you push on main branch, workflow run
+  pull_request:
+    branches:[main]
+                       
+  workflow_dispatch:  # When you tab Action, workflow run
+
+
+# the main part of workflow. This distribute action.
+jobs:
+  # job named "build"
+  build:
+    # configuration of virtualized environment
+    runs-on: ubuntu-latest
+
+    steps:
+      # designate git hub actions varsion
+      - name: Checkout
+      - uses: actions/checkout@v4
+
+      # runs a single command
+      - name: Run a one-line script
+        run: echo Hello,world!
+      
+  # job named "hoge"
+  hoge: 
+    runs-on: ubuntu-latest
+    stepps:
+      - name: Hoge step
+      - run echo Hoge World!
