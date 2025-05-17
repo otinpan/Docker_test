@@ -1,4 +1,3 @@
-// main.rs
 use anyhow::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -8,7 +7,7 @@ use std::process;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use convert_to_json::{message,topic,test_case,Root};
+use convert_to_json::{message,topic,test_case,Root,output};
 use std::env;
 
 fn main()  {
@@ -46,19 +45,12 @@ fn main()  {
         topics,
     };
 
-    let path=Path::new(&dir_path);
-    let name:String;
-    if let Some(file_name)=path.file_name(){
-        name=file_name.to_string_lossy().to_string();
-    }else{
-        eprintln!("can't extract last part");
+    if let Err(e)=output(dir_path,root){
+        eprintln!("output error : {}",e);
         process::exit(1);
     }
-    let output_path=Path::new("../Test/json").join(format!("{}.json",name));
-    // ④ JSON 文字列に変換して保存
-    let json = serde_json::to_string_pretty(&root).unwrap();
-    fs::write(output_path, json).unwrap();
     
+    //すべて成功!
     println!("jsonファイルを生成しました。")
 
 }
