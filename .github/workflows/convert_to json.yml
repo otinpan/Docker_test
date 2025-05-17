@@ -1,0 +1,43 @@
+name: Convert changed txt to JSON
+
+on:
+  push:
+    branches:
+      - feature/*
+    paths:
+      - 'Test/text/**'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 前のコミットと比較できるように
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Get changed .txt files
+        id: changed
+        run: |
+          git diff --name-only HEAD^ HEAD | grep '^Test/text/.*\.txt$' > changed_files.txt
+          cat changed_files.txt
+
+      - name: Run converter on changed files
+        run: |
+          cargo run --release --manifest-path convert_to_json/Cargo.toml -- changed_files.txt
+
+      - name: Commit and push converted JSON
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add Test/json/
+          git commit -m "Add JSON for changed .txt files"
+          git push origin HEAD:${{ github.ref_name }}

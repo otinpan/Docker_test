@@ -9,17 +9,22 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use convert_to_json::{message,topic,test_case,Root};
+use std::env;
 
 fn main()  {
 
-    let dir_path="./test1";
+    let args:Vec<String>=env::args().collect();
+    if args.len()<2{
+        eprintln!("not enough arguments");
+    }
+    let dir_path=args[1].clone();
 
+    //パスが存在するか調べる
     let test_case=test_case::TestCase::new(&dir_path).unwrap_or_else(|err|{
         eprintln!("problem occured: {}",err);
         process::exit(1);
     });
 
-    //println!("{:?}",test_case);
 
     //talk.txtからVec<Message>をつくる
     let messages=message::talk_converter(&test_case.talk).unwrap_or_else(|err|{
@@ -27,7 +32,6 @@ fn main()  {
         process::exit(1);
     });
 
-    //println!("{:?}",messages);
 
     //ans.txtからVec<Topic>をつくる
     let topics=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
@@ -42,10 +46,19 @@ fn main()  {
         topics,
     };
 
+    let path=Path::new(&dir_path);
+    let name:String;
+    if let Some(file_name)=path.file_name(){
+        name=file_name.to_string_lossy().to_string();
+    }else{
+        eprintln!("can't extract last part");
+        process::exit(1);
+    }
+    let output_path=Path::new("../Test/json").join(format!("{}.json",name));
     // ④ JSON 文字列に変換して保存
     let json = serde_json::to_string_pretty(&root).unwrap();
-    fs::write("output.json", json).unwrap();
-
+    fs::write(output_path, json).unwrap();
+    
     println!("jsonファイルを生成しました。")
 
 }
