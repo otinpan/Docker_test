@@ -1,4 +1,4 @@
-name: Convert changed txt to JSON
+name: Convert new folders in Test/text
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # 前のコミットと比較できるように
+          fetch-depth: 2
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -24,20 +24,32 @@ jobs:
           profile: minimal
           override: true
 
-      - name: Get changed .txt files
-        id: changed
+      - name: Detect added/changed folders in Test/text
+        id: detect
         run: |
-          git diff --name-only HEAD^ HEAD | grep '^Test/text/.*\.txt$' > changed_files.txt
-          cat changed_files.txt
+          # 変更されたファイルから親ディレクトリ名だけ抽出
+          git diff --name-status HEAD^ HEAD | \
+            grep '^A\|^M' | \
+            awk '{print $2}' | \
+            grep '^Test/text/' | \
+            awk -F/ '{print $3}' | \
+            sort | uniq > changed_dirs.txt
 
-      - name: Run converter on changed files
+          echo "Changed dirs:"
+          cat changed_dirs.txt
+
+      - name: Run Rust conversion on each folder
         run: |
-          cargo run --release --manifest-path convert_to_json/Cargo.toml -- changed_files.txt
+          while read dir; do
+            echo "Processing folder: $dir"
+            cargo run --release --manifest-path convert_to_json/Cargo.toml -- "Test/text/$dir"
+          done < changed_dirs.txt
 
-      - name: Commit and push converted JSON
+      - name: Commit and push JSON output
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add Test/json/
-          git commit -m "Add JSON for changed .txt files"
+          git commit -m "Add JSON from pushed folder(s)"
           git push origin HEAD:${{ github.ref_name }}
+
