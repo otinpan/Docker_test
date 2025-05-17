@@ -22,7 +22,7 @@ jobs:
     steps:
       # designate git hub actions varsion
       - name: Checkout
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       # runs a single command
       - name: Run a one-line script
@@ -33,4 +33,4 @@ jobs:
     runs-on: ubuntu-latest
     stepps:
       - name: Hoge step
-      - run echo Hoge World!
+        run: echo Hoge World!
