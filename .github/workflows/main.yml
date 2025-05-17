@@ -31,6 +31,6 @@ jobs:
   # job named "hoge"
   hoge: 
     runs-on: ubuntu-latest
-    stepps:
+    steps:
       - name: Hoge step
         run: echo Hoge World!
