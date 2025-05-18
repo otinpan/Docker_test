@@ -14,28 +14,29 @@ fn main()  {
 
     let args:Vec<String>=env::args().collect();
     if args.len()<2{
-        eprintln!("not enough arguments");
+        println!("not enough arguments");
+        process::exit(1);
     }
     let dir_path=args[1].clone();
 
 
     //パスが存在するか調べる
     let test_case=test_case::TestCase::new(&dir_path).unwrap_or_else(|err|{
-        eprintln!("problem occured: {}",err);
+        println!("problem occured: {}",err);
         process::exit(1);
     });
 
 
     //talk.txtからVec<Message>をつくる
     let messages=message::talk_converter(&test_case.talk).unwrap_or_else(|err|{
-        eprintln!("application err in loading talk.txt: {}",err);
+        println!("application err in loading talk.txt: {}",err);
         process::exit(1);
     });
 
 
     //ans.txtからVec<Topic>をつくる
     let topics=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
-        eprintln!("apprication err in loading ans.txt: {}",err);
+        println!("apprication err in loading ans.txt: {}",err);
         process::exit(1);
     });
 
@@ -47,7 +48,7 @@ fn main()  {
     };
 
     if let Err(e)=output(dir_path,root){
-        eprintln!("output error : {}",e);
+        println!("output error : {}",e);
         process::exit(1);
     }
     
