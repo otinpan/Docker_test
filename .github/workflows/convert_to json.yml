@@ -39,6 +39,7 @@ jobs:
 
       - name: Run Rust conversion on each folder
         run: |
+          set -x
           while read dir; do
             echo "Processing folder: $dir"
             cargo run --release --manifest-path convert_to_json/Cargo.toml -- "Test/text/$dir"
