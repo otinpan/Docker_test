@@ -1,11 +1,12 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path, PathBuf,Component};
 
 
 #[derive(Debug)]
 pub struct TestCase{
     pub talk:String,
     pub answer:String,
+    pub output:String,
 }
 
 impl TestCase{
@@ -42,8 +43,36 @@ impl TestCase{
         if !ans_counter{
             return Err("not found ans.txt");
         }
+
+        let name:String;
+        if let Some(file_name)=path.file_name(){
+            name=file_name.to_string_lossy().to_string();
+        }else{
+            return Err("not make file name ");
+        }
+        
+
         let talk=format!("{}/{}",path_name,talk);
         let answer=format!("{}/{}",path_name,answer);
-        Ok(TestCase{talk,answer})
+        let output=format!("{}/json/{}.json",head_path_str(path_name,3),name);
+        Ok(TestCase{talk,answer,output})
     }
+}
+
+
+//先頭からn番目のフォルダ構成を出力　../Test/text/test1 2  -> ../Test
+pub fn head_path_str<P: AsRef<Path>>(path: P, n: usize) -> String {
+    let head: PathBuf = path
+        .as_ref()
+        .components()
+        .take(n)
+        .fold(PathBuf::new(), |mut acc, c| {
+            acc.push(match c {
+                Component::Normal(s) => s,
+                other => other.as_os_str(),
+            });
+            acc
+        });
+
+    head.to_string_lossy().into_owned()
 }

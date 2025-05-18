@@ -20,22 +20,23 @@ pub struct Root {
     pub topics: Vec<topic::Topic>, 
 }
 
+pub fn ensure_file_exists<P: AsRef<Path>>(file_path: P) -> Result<(), String> {
+    let p = file_path.as_ref();
 
-pub fn output(dir_path:String,root:Root)->Result<(),Box<dyn Error>>{
+    match fs::metadata(p) {
+        Ok(meta) if meta.is_file() => Ok(()),
+        Ok(_)  => Err(format!("{} exists but is not a file", p.display())),
+        Err(_) => Err(format!("{} not found", p.display())),
+    }
+}
+
+pub fn write(dir_path:String,root:Root)->Result<(),Box<dyn Error>>{
     let path=Path::new(&dir_path);
 
-    let name:String;
-    if let Some(file_name)=path.file_name(){
-        name=file_name.to_string_lossy().to_string();
-    }else{
-        eprintln!("can't extract last part");
-        process::exit(1);
-    }
-    let name=format!("{}_distinguished",name);
-    let output_path=Path::new("../Test/json").join(format!("{}.json",name));
     // ④ JSON 文字列に変換して保存
     let json = serde_json::to_string_pretty(&root)?;
-    fs::write(output_path, json)?;
+    fs::write(path, json)?;
 
     Ok(())
 }
+

@@ -7,7 +7,7 @@ use std::process;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use convert_to_json::{message,topic,test_case,Root,output};
+use convert_to_json::{message,topic,test_case,Root,write,ensure_file_exists};
 use std::env;
 
 fn main()  {
@@ -15,7 +15,7 @@ fn main()  {
     let args:Vec<String>=env::args().collect();
     if args.len()<2{
         println!("not enough arguments");
-        process::exit(1);
+        return
     }
     let dir_path=args[1].clone();
 
@@ -25,6 +25,13 @@ fn main()  {
         println!("problem occured: {}",err);
         process::exit(1);
     });
+
+
+    //jsonが存在するなら終了する
+    if ensure_file_exists(&test_case.output).is_ok() {
+        println!("file: {} exists ",test_case.output);
+        process::exit(1);        // ② 見つかったら即終了 (exit code = 0)
+    }
 
 
     //talk.txtからVec<Message>をつくる
@@ -47,8 +54,8 @@ fn main()  {
         topics,
     };
 
-    if let Err(e)=output(dir_path,root){
-        println!("output error : {}",e);
+    if let Err(e)=write(test_case.output,root){
+        println!("write to folder error : {}",e);
         process::exit(1);
     }
     
