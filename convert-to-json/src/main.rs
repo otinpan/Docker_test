@@ -18,6 +18,7 @@ fn main()  {
     }
     let dir_path=args[1].clone();
 
+
     //パスが存在するか調べる
     let test_case=test_case::TestCase::new(&dir_path).unwrap_or_else(|err|{
         eprintln!("problem occured: {}",err);

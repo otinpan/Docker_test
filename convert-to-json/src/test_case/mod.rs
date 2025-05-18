@@ -20,15 +20,10 @@ impl TestCase{
 
         let talk=String::from("talk.txt");
         let answer=String::from("ans.txt");
-        let mut count=0;
         let mut talk_counter=false;
         let mut ans_counter=false;
         //entriesはfs:read_dir(dir)の結果でディレクトリ内のファイルやサブディレクトリを1つずつ返すイテレータ
         for entry in entries {
-            count+=1;
-            if count>2{
-                 return Err("this folder have too many files");
-            }
             if let Ok(entry) = entry {
                 if let Some(name) = entry.path().file_name() {
                     if name == "talk.txt" {
