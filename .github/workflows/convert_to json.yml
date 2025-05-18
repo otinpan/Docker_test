@@ -41,7 +41,7 @@ jobs:
         run: |
           while read dir; do
             echo "Processing folder: $dir"
-            cargo run --release --manifest-path convert_to_json/Cargo.toml -- "Test/text/$dir"
+            cargo run --release --manifest-path convert_to_json/Cargo.toml -- "../Test/text/$dir"
           done < changed_dirs.txt
 
       - name: Commit and push JSON output
