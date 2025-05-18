@@ -2,8 +2,7 @@ name: Convert new folders in Test/text
 
 on:
   push:
-    branches:
-      - feature/*
+    branches: [feature]
     paths:
       - 'Test/text/**'
 
