@@ -30,7 +30,7 @@ jobs:
         run: |
           for dir in Test/text/*/ ; do
             folder=$(basename "$dir")               # 例: test1
-            echo "▶️ Processing $folder"
+            echo "Processing $folder"
             cargo run --release -- "../Test/text/$folder" \
               || echo "Rust failed for $folder"
           done
