@@ -26,14 +26,15 @@ jobs:
 
       # --- Rust をフォルダごとに実行 ---
       - name: Run Rust for every folder in Test/text
-        continue-on-error: true       # どこか失敗してもジョブ継続
+        continue-on-error: true
         run: |
           for dir in Test/text/*/ ; do
-            folder=$(basename "$dir")               # 例: test1
-            echo "Processing $folder"
-            cargo run --release -- "../Test/text/$folder" \
+            folder=$(basename "$dir")
+            echo "▶️ Processing $folder"
+            cargo run --manifest-path converter/Cargo.toml --release -- "../Test/text/$folder" \
               || echo "Rust failed for $folder"
           done
+
 
       # --- 生成物をコミット ---
       - name: Commit converted JSON
