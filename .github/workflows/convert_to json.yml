@@ -35,7 +35,7 @@ jobs:
             echo "▶️ Processing $folder"
             # convert-to-json/Cargo.toml をビルドして実行
             cargo run --manifest-path convert-to-json/Cargo.toml \
-              --release -- "../Test/text/$folder" \
+              --release -- "Test/text/$folder" \
               || echo "Rust failed for $folder"
           done
 
