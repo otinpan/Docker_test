@@ -3,40 +3,43 @@ name: Convert ALL folders in Test/text
 on:
   push:
     branches: [ feature ]
-    paths:  [ 'Test/text/**' ]   # 変更があれば起動
+    paths:  [ 'Test/text/**' ]        # ← 変更があれば自動実行
   pull_request:
     branches: [ feature ]
     paths:  [ 'Test/text/**' ]
-  workflow_dispatch:
+  workflow_dispatch:                  # 手動実行ボタン
 
 jobs:
   convert:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # 後で push するため
+      contents: write                 # push するため
 
     steps:
+      # --- ソース取得 ---
       - uses: actions/checkout@v4
 
+      # --- Rust toolchain ---
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           override: true
 
-      # --- Rust をフォルダごとに実行 ---
-      - name: Run Rust for every folder in Test/text
-        continue-on-error: true
+      # --- すべてのフォルダを処理 ---
+      - name: Run converter for each folder
+        continue-on-error: true        # 1フォルダ失敗でもジョブ継続
         run: |
           for dir in Test/text/*/ ; do
-            folder=$(basename "$dir")
+            folder=$(basename "$dir")                     # 例: test1
             echo "▶️ Processing $folder"
-            cargo run --manifest-path converter/Cargo.toml --release -- "../Test/text/$folder" \
+            # convert-to-json/Cargo.toml をビルドして実行
+            cargo run --manifest-path convert-to-json/Cargo.toml \
+              --release -- "../Test/text/$folder" \
               || echo "Rust failed for $folder"
           done
 
-
-      # --- 生成物をコミット ---
+      # --- 生成物をコミット & push ---
       - name: Commit converted JSON
         run: |
           git config user.name  "github-actions[bot]"
