@@ -1,0 +1,55 @@
+name: Convert ALL folders in Test/text
+
+on:
+  push:
+    branches: [ feature ]
+    paths:  [ 'Test/text/**' ]        # ← 変更があれば自動実行
+  pull_request:
+    branches: [ feature ]
+    paths:  [ 'Test/text/**' ]
+  workflow_dispatch:                  # 手動実行ボタン
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write                 # push するため
+
+    steps:
+      # --- ソース取得 ---
+      - uses: actions/checkout@v4
+
+      # --- Rust toolchain ---
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Run converter for each folder
+        continue-on-error: true
+        run: |
+          # カレントを Rust プロジェクト直下へ
+          pushd convert-to-json
+          for dir in ../Test/text/*/ ; do
+            folder=$(basename "$dir")              # 例: test1
+            echo "▶️ Processing $folder"
+            # ここでは already in convert-to-json/
+            cargo run --quiet --release -- "../Test/text/$folder" 2>/dev/null \
+              || echo "Rust failed for $folder"
+          done
+          popd    # 元のディレクトリ（リポジトリルート）へ戻る
+
+
+      # --- 生成物をコミット & push ---
+      - name: Commit converted JSON
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Test/json
+          if git diff --cached --quiet; then
+            echo "No new JSON to commit"
+            exit 0
+          fi
+          git commit -m "chore(json): auto-generate from Rust (all folders)"
+          git push

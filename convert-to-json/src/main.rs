@@ -1,4 +1,3 @@
-// main.rs
 use anyhow::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -8,45 +7,80 @@ use std::process;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use convert_to_json::{message,topic,test_case,Root};
+use convert_to_json::{message,topic,test_case,Root,UndistinguishedRoot,
+    write_json};
+use std::env;
 
 fn main()  {
+    //もしTest/Distinguished/text/... が変更されるならTestCase::newを変更してね
+    let args:Vec<String>=env::args().collect();
+    if args.len()<2{
+        println!("not enough arguments");
+        return
+    }
+    let dir_path=args[1].clone();
 
-    let dir_path="./test1";
 
+    //パスが存在するか調べる
     let test_case=test_case::TestCase::new(&dir_path).unwrap_or_else(|err|{
-        eprintln!("problem occured: {}",err);
-        process::exit(1);
+        println!("problem occured: {}",err);
+        if err=="json file is exist. you do not have to create json file"{
+            process::exit(0);
+        }else{
+            process::exit(1);
+        }
     });
 
-    //println!("{:?}",test_case);
+    println!("{:?}",test_case);
 
     //talk.txtからVec<Message>をつくる
     let messages=message::talk_converter(&test_case.talk).unwrap_or_else(|err|{
-        eprintln!("application err in loading talk.txt: {}",err);
+        println!("application err in loading talk.txt: {}",err);
         process::exit(1);
     });
-
-    //println!("{:?}",messages);
 
     //ans.txtからVec<Topic>をつくる
-    let topics=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
-        eprintln!("apprication err in loading ans.txt: {}",err);
+    let answer=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
+        println!("apprication err in loading ans.txt: {}",err);
         process::exit(1);
     });
 
-    //println!("{:?}",topics);
+    let answer_copied=answer.clone();
+    let messages_copied=messages.clone();
+
     // ③ JSON 構造体を作成
     let root = Root {
         messages,
-        topics,
+        answer:answer,
     };
 
-    // ④ JSON 文字列に変換して保存
-    let json = serde_json::to_string_pretty(&root).unwrap();
-    fs::write("output.json", json).unwrap();
+    if let Err(e)=write_json(&test_case.output_folder,&test_case.output_distinguished,&root){
+        println!("write to folder error : {}",e);
+        process::exit(1);
+    }
 
-    println!("jsonファイルを生成しました。")
+
+    // undistinguished をつくる
+    let messages=message::distinguished_to_undistinguished(&messages_copied).unwrap_or_else(|err|{
+        println!("failed to distinguished message to undistinguished: {}",err);
+        process::exit(1);
+    });
+
+    let root=UndistinguishedRoot{
+        messages,
+        answer: answer_copied,
+    };
+
+    if let Err(e)=write_json(&test_case.output_folder,&test_case.output_undistinguished,&root){
+        println!("write to folder error : {}",e);
+        process::exit(1);
+    }
+
+
+
+    
+    //すべて成功!
+    println!("jsonファイルを生成しました!")
 
 }
 

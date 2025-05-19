@@ -2,13 +2,13 @@ use regex::Regex;
 use serde::{Serialize, Deserialize};
 use std::fs;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct Topic {
     pub topic_name: String,
     pub content: Vec<Example>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct Example {
     pub example: String,
 }
