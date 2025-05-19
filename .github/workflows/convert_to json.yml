@@ -1,9 +1,9 @@
-name: Convert new folders in Test/text
+name: Convert ALL folders in Test/text
 
 on:
   push:
     branches: [ feature ]
-    paths: [ 'Test/text/**' ]
+    paths:  [ 'Test/text/**' ]   # 変更があれば起動
   pull_request:
     branches: [ feature ]
     paths:  [ 'Test/text/**' ]
@@ -13,11 +13,10 @@ jobs:
   convert:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write    # 後で push するため
 
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -25,28 +24,19 @@ jobs:
           profile: minimal
           override: true
 
-      # 変更ディレクトリ抽出
-      - name: Get changed dirs
-        id: changed_dirs
+      # --- Rust をフォルダごとに実行 ---
+      - name: Run Rust for every folder in Test/text
+        continue-on-error: true       # どこか失敗してもジョブ継続
         run: |
-          dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- Test/text/ |
-                 grep -E '^Test/text/[^/]+/?' |
-                 cut -d/ -f3 | sort -u)
-          echo "folders=$dirs" >> "$GITHUB_OUTPUT"
-
-      # Rust を実行
-      - name: Run Rust per sub-folder
-        continue-on-error: true
-        if: steps.changed_dirs.outputs.folders != ''
-        run: |
-          for f in ${{ steps.changed_dirs.outputs.folders }}; do
-            echo "▶️ Processing $f"
-            cargo run --release -- "../Test/text/$f" || echo "Rust failed for $f"
+          for dir in Test/text/*/ ; do
+            folder=$(basename "$dir")               # 例: test1
+            echo "▶️ Processing $folder"
+            cargo run --release -- "../Test/text/$folder" \
+              || echo "Rust failed for $folder"
           done
 
-      # 生成物をコミット
+      # --- 生成物をコミット ---
       - name: Commit converted JSON
-        if: steps.changed_dirs.outputs.folders != ''
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -55,5 +45,5 @@ jobs:
             echo "No new JSON to commit"
             exit 0
           fi
-          git commit -m "chore(json): auto-generate from Rust"
+          git commit -m "chore(json): auto-generate from Rust (all folders)"
           git push
