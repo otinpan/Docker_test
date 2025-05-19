@@ -7,11 +7,12 @@ use std::process;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use convert_to_json::{message,topic,test_case,Root,write,ensure_file_exists};
+use convert_to_json::{message,topic,test_case,Root,UndistinguishedRoot,
+    write_json};
 use std::env;
 
 fn main()  {
-
+    //もしTest/Distinguished/text/... が変更されるならTestCase::newを変更してね
     let args:Vec<String>=env::args().collect();
     if args.len()<2{
         println!("not enough arguments");
@@ -23,16 +24,14 @@ fn main()  {
     //パスが存在するか調べる
     let test_case=test_case::TestCase::new(&dir_path).unwrap_or_else(|err|{
         println!("problem occured: {}",err);
-        process::exit(1);
+        if err=="json file is exist. you do not have to create json file"{
+            process::exit(0);
+        }else{
+            process::exit(1);
+        }
     });
 
-
-    //jsonが存在するなら終了する
-    if ensure_file_exists(&test_case.output).is_ok() {
-        println!("file: {} exists ",test_case.output);
-        process::exit(1);        // ② 見つかったら即終了 (exit code = 0)
-    }
-
+    println!("{:?}",test_case);
 
     //talk.txtからVec<Message>をつくる
     let messages=message::talk_converter(&test_case.talk).unwrap_or_else(|err|{
@@ -40,27 +39,48 @@ fn main()  {
         process::exit(1);
     });
 
-
     //ans.txtからVec<Topic>をつくる
-    let topics=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
+    let answer=topic::ans_converter(&test_case.answer).unwrap_or_else(|err|{
         println!("apprication err in loading ans.txt: {}",err);
         process::exit(1);
     });
 
-    //println!("{:?}",topics);
+    let answer_copied=answer.clone();
+    let messages_copied=messages.clone();
+
     // ③ JSON 構造体を作成
     let root = Root {
         messages,
-        topics,
+        answer:answer,
     };
 
-    if let Err(e)=write(test_case.output,root){
+    if let Err(e)=write_json(&test_case.output_folder,&test_case.output_distinguished,&root){
         println!("write to folder error : {}",e);
         process::exit(1);
     }
+
+
+    // undistinguished をつくる
+    let messages=message::distinguished_to_undistinguished(&messages_copied).unwrap_or_else(|err|{
+        println!("failed to distinguished message to undistinguished: {}",err);
+        process::exit(1);
+    });
+
+    let root=UndistinguishedRoot{
+        messages,
+        answer: answer_copied,
+    };
+
+    if let Err(e)=write_json(&test_case.output_folder,&test_case.output_undistinguished,&root){
+        println!("write to folder error : {}",e);
+        process::exit(1);
+    }
+
+
+
     
     //すべて成功!
-    println!("jsonファイルを生成しました。")
+    println!("jsonファイルを生成しました!")
 
 }
 

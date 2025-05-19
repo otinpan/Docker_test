@@ -8,35 +8,41 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::env;
+use std::borrow::Cow;
 
 pub mod message;
 pub mod topic;
 pub mod test_case;
 
 
-#[derive(Serialize, Deserialize,Debug)]
-pub struct Root {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Root{
     pub messages: Vec<message::Message>,
-    pub topics: Vec<topic::Topic>, 
+    pub answer:   Vec<topic::Topic>,
 }
 
-pub fn ensure_file_exists<P: AsRef<Path>>(file_path: P) -> Result<(), String> {
-    let p = file_path.as_ref();
 
-    match fs::metadata(p) {
-        Ok(meta) if meta.is_file() => Ok(()),
-        Ok(_)  => Err(format!("{} exists but is not a file", p.display())),
-        Err(_) => Err(format!("{} not found", p.display())),
-    }
+#[derive(Serialize, Deserialize,Debug)]
+pub struct UndistinguishedRoot{
+    pub messages: message::UndistinguishedMessage,
+    pub answer: Vec<topic::Topic>,
 }
 
-pub fn write(dir_path:String,root:Root)->Result<(),Box<dyn Error>>{
-    let path=Path::new(&dir_path);
 
-    // ④ JSON 文字列に変換して保存
-    let json = serde_json::to_string_pretty(&root)?;
+//dir_pathのファイルにjsonを書き込む　../Test/json/test1/distinguished.json
+pub fn write_json<P, S>(folder_path: &P,json_path: &P, root_data: &S) -> Result<(), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+    S: Serialize,
+{
+    //../Test/json/testの中にフォルダを作る
+    fs::create_dir_all(folder_path);
+
+    let path = json_path.as_ref();
+
+    // pretty‑printed JSON にして書き込む
+    let json = serde_json::to_string_pretty(root_data)?;
     fs::write(path, json)?;
 
     Ok(())
 }
-

@@ -2,12 +2,17 @@ use regex::Regex;
 use serde::{Serialize, Deserialize};
 use std::fs;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct Message {
     pub role: String,
     pub content: String,
 }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UndistinguishedMessage{
+    pub content:String,
+}
 
+// 話者識別あり
 pub fn talk_converter(talk_file: &str) -> Result<Vec<Message>, &'static str> {
     let raw = fs::read_to_string(talk_file).map_err(|_| "Failed to read file")?;
 
@@ -50,4 +55,23 @@ pub fn talk_converter(talk_file: &str) -> Result<Vec<Message>, &'static str> {
     }
 
     Ok(messages)
+}
+
+
+//message.contentから話者識別なしに変換する
+pub fn distinguished_to_undistinguished(
+    messages: &Vec<Message>,
+) -> Result<UndistinguishedMessage, &'static str> {
+    if messages.is_empty() {
+        return Err("message list is empty");
+    }
+
+    // すべての content を連結（改行区切り）
+    let content = messages
+        .iter()
+        .map(|m| m.content.as_str())
+        .collect::<Vec<&str>>()
+        .join("\n");
+
+    Ok(UndistinguishedMessage { content })
 }
