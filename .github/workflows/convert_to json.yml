@@ -35,7 +35,7 @@ jobs:
             folder=$(basename "$dir")              # 例: test1
             echo "▶️ Processing $folder"
             # ここでは already in convert-to-json/
-            cargo run --release -- "../Test/text/$folder" \
+            cargo run --quiet --release -- "../Test/text/$folder" 2>/dev/null \
               || echo "Rust failed for $folder"
           done
           popd    # 元のディレクトリ（リポジトリルート）へ戻る
