@@ -26,18 +26,20 @@ jobs:
           profile: minimal
           override: true
 
-      # --- すべてのフォルダを処理 ---
       - name: Run converter for each folder
-        continue-on-error: true        # 1フォルダ失敗でもジョブ継続
+        continue-on-error: true
         run: |
-          for dir in Test/text/*/ ; do
-            folder=$(basename "$dir")                     # 例: test1
+          # カレントを Rust プロジェクト直下へ
+          pushd convert-to-json
+          for dir in ../Test/text/*/ ; do
+            folder=$(basename "$dir")              # 例: test1
             echo "▶️ Processing $folder"
-            # convert-to-json/Cargo.toml をビルドして実行
-            cargo run --manifest-path convert-to-json/Cargo.toml \
-              --release -- "Test/text/$folder" \
+            # ここでは already in convert-to-json/
+            cargo run --release -- "../Test/text/$folder" \
               || echo "Rust failed for $folder"
           done
+          popd    # 元のディレクトリ（リポジトリルート）へ戻る
+
 
       # --- 生成物をコミット & push ---
       - name: Commit converted JSON
